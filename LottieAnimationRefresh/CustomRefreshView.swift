@@ -10,15 +10,15 @@ import Lottie
 // MARK: - Custom View Builder
 struct CustomRefreshView<Content: View>: View {
   var content: Content
-  var showIndecator: Bool
+  var showIndicator: Bool
   var lottieFileName: String
   var triggerDistance: CGFloat
 
   // MARK: - Async call back
   var onRefresh: () async -> ()
 
-  init(showIndecator: Bool = true, lottieFileName: String,triggerDistance: CGFloat = 100, @ViewBuilder content: @escaping () -> Content, onRefresh: @escaping () async -> ()) {
-    self.showIndecator = showIndecator
+  init(showIndicator: Bool = true, lottieFileName: String,triggerDistance: CGFloat = 100, @ViewBuilder content: @escaping () -> Content, onRefresh: @escaping () async -> ()) {
+    self.showIndicator = showIndicator
     self.lottieFileName = lottieFileName
     self.triggerDistance = triggerDistance
     self.content = content()
@@ -29,7 +29,7 @@ struct CustomRefreshView<Content: View>: View {
   
   var body: some View {
     
-    ScrollView(.vertical, showsIndicators: showIndecator) {
+    ScrollView(.vertical, showsIndicators: showIndicator) {
       VStack(spacing: 0){
         ResizableLottieView(fileName: lottieFileName, isPlaying: $scrollDelegate.isRefreshing)
           .scaleEffect(scrollDelegate.isEligible ? 1 : 0.001)
@@ -98,7 +98,7 @@ struct CustomRefreshView<Content: View>: View {
 }
 
 #Preview {
-  CustomRefreshView(showIndecator: false, lottieFileName: "LoadingBar") {
+  CustomRefreshView(showIndicator: false, lottieFileName: "LoadingBar") {
     Rectangle()
       .fill(.red)
       .frame(height: 200)

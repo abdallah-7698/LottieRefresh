@@ -10,7 +10,7 @@ import Lottie
 
 struct ContentView: View {
     var body: some View {
-      CustomRefreshView(showIndecator: false, lottieFileName: "LoadingBar") {
+      CustomRefreshView(showIndicator: false, lottieFileName: "LoadingBar") {
         Rectangle()
           .fill(.red)
           .frame(height: 200)
