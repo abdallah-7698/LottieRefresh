@@ -118,8 +118,8 @@ class ScrollViewModel: NSObject, ObservableObject, UIGestureRecognizerDelegate{
   @Published var contentOffset: CGFloat = 0
   @Published var progress: CGFloat = 0
   
-  func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer, shouldRequireFailureOf otherGestureRecognizer: UIGestureRecognizer) -> Bool {
-    return true
+  func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+      return true
   }
   
   // MARK: Add Gesture the the Top View
