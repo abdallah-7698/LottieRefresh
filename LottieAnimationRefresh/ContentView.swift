@@ -6,16 +6,17 @@
 //
 
 import SwiftUI
+import Lottie
 
 struct ContentView: View {
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
-        }
-        .padding()
+      CustomRefreshView(showIndecator: false, lottieFileName: "LoadingBar") {
+        Rectangle()
+          .fill(.red)
+          .frame(height: 200)
+      } onRefresh: {
+        try? await Task.sleep(nanoseconds: 3_000_000_000)
+      }
     }
 }
 
