@@ -12,13 +12,15 @@ struct CustomRefreshView<Content: View>: View {
   var content: Content
   var showIndecator: Bool
   var lottieFileName: String
+  var triggerDistance: CGFloat
 
   // MARK: - Async call back
   var onRefresh: () async -> ()
 
-  init(showIndecator: Bool = true, lottieFileName: String, @ViewBuilder content: @escaping () -> Content, onRefresh: @escaping () async -> ()) {
+  init(showIndecator: Bool = true, lottieFileName: String,triggerDistance: CGFloat = 100, @ViewBuilder content: @escaping () -> Content, onRefresh: @escaping () async -> ()) {
     self.showIndecator = showIndecator
     self.lottieFileName = lottieFileName
+    self.triggerDistance = triggerDistance
     self.content = content()
     self.onRefresh = onRefresh
   }
@@ -50,7 +52,7 @@ struct CustomRefreshView<Content: View>: View {
             .animation(.easeInOut(duration: 0.25), value: scrollDelegate.isEligible)
             
           })
-          .frame(height: 150 * scrollDelegate.progress)
+          .frame(height: max(0, triggerDistance * scrollDelegate.progress))
           .opacity(scrollDelegate.progress)
           .offset(y: scrollDelegate.isEligible ? -(scrollDelegate.contentOffset < 0 ? 0 : scrollDelegate.contentOffset) : -(scrollDelegate.scrollOffset < 0 ? 0 : scrollDelegate.scrollOffset) )
         
@@ -62,9 +64,8 @@ struct CustomRefreshView<Content: View>: View {
         
         // MARK: Stop the progress when it's Eligible for refresh
         if !scrollDelegate.isEligible {
-          var progress = offset / 150
-          progress = (progress < 0 ? 0 : progress)
-          progress = (progress > 1 ? 1  : progress)
+          var progress = offset / triggerDistance
+          progress = max(0, min(1, progress))
           scrollDelegate.scrollOffset = offset
           scrollDelegate.progress = progress
         }
@@ -76,8 +77,8 @@ struct CustomRefreshView<Content: View>: View {
       }
     }
     .coordinateSpace(name: "SCROLL")
-    .onAppear(perform: scrollDelegate.addGesture)
-    .onDisappear(perform: scrollDelegate.addGesture)
+    .onAppear{scrollDelegate.addGesture(triggerDistance: triggerDistance)}
+    .onDisappear(perform: scrollDelegate.removeGesture)
     .onChange(of: scrollDelegate.isRefreshing) { newValue in
       if newValue {
         Task {
@@ -102,7 +103,7 @@ struct CustomRefreshView<Content: View>: View {
       .fill(.red)
       .frame(height: 200)
   } onRefresh: {
-    try? await Task.sleep(nanoseconds: 3_000_000_000)
+    try? await Task.sleep(nanoseconds: 2_000_000_000)
   }
 
 }
@@ -118,12 +119,15 @@ class ScrollViewModel: NSObject, ObservableObject, UIGestureRecognizerDelegate{
   @Published var contentOffset: CGFloat = 0
   @Published var progress: CGFloat = 0
   
+  private var triggerDistance: CGFloat = 0
+    
   func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
       return true
   }
   
   // MARK: Add Gesture the the Top View
-  func addGesture() {
+  func addGesture(triggerDistance: CGFloat) {
+    self.triggerDistance = triggerDistance
     let pinGesture = UIPanGestureRecognizer(target: self, action: #selector(onGestureChange(gesture:)))
     pinGesture.delegate = self
     rootController().view.addGestureRecognizer(pinGesture)
@@ -149,7 +153,7 @@ class ScrollViewModel: NSObject, ObservableObject, UIGestureRecognizerDelegate{
       print("User refreshed touch")
       // MARK: Your max duration goes here
       if !isRefreshing {
-        if scrollOffset > 150 {
+        if scrollOffset > triggerDistance {
           isEligible = true
         } else {
           isEligible = false
@@ -217,9 +221,6 @@ struct ResizableLottieView: UIViewRepresentable {
   func addLottieView(view to: UIView) {
     let lottieView = LottieAnimationView(name: fileName, bundle: .main)
     lottieView.backgroundColor = .clear
-    // -> If we want the animation to loop
-    // lottieView.loopMode = .loop
-
     // MARK: For finding it in subview and us ed for animation
     lottieView.tag = 1009
     lottieView.translatesAutoresizingMaskIntoConstraints = false
