@@ -31,26 +31,12 @@ struct CustomRefreshView<Content: View>: View {
     
     ScrollView(.vertical, showsIndicators: showIndicator) {
       VStack(spacing: 0){
-        ResizableLottieView(fileName: lottieFileName, isPlaying: $scrollDelegate.isRefreshing)
+        Rectangle()
+          .fill(.clear)
           .scaleEffect(scrollDelegate.isEligible ? 1 : 0.001)
           .animation(.easeInOut(duration: 0.2), value: scrollDelegate.isEligible)
           .overlay(content: {
-            //MARK: -
-            VStack(spacing: 12) {
-              Image(systemName: "arrow.down")
-                .font(.callout.bold())
-                .foregroundColor(.white)
-                .rotationEffect(.init(degrees: scrollDelegate.progress * 180))
-                .padding(8)
-                .background(.primary,in: Circle())
-              
-              Text("Pull to refresh")
-                .font(.caption.bold())
-                .foregroundColor(.primary)
-            }
-            .opacity(scrollDelegate.isEligible ? 0 : 1)
-            .animation(.easeInOut(duration: 0.25), value: scrollDelegate.isEligible)
-            
+            ResizableLottieView(fileName: lottieFileName, isPlaying: $scrollDelegate.isRefreshing, progressPoint: $scrollDelegate.progress)
           })
           .frame(height: max(0, triggerDistance * scrollDelegate.progress))
           .opacity(scrollDelegate.progress)
@@ -164,7 +150,7 @@ class ScrollViewModel: NSObject, ObservableObject, UIGestureRecognizerDelegate{
   
 }
 
-// MARK: Offset Modifire -> track a view’s vertical scroll offset (Y-position) within a named coordinateSpace
+// MARK: Offset Modifire -> track a view's vertical scroll offset (Y-position) within a named coordinateSpace
 extension View {
   @ViewBuilder
   func offset(coordinateSpace: String, offset: @escaping (CGFloat) -> ()) -> some View {
@@ -195,6 +181,7 @@ struct OffsetKey: PreferenceKey {
 struct ResizableLottieView: UIViewRepresentable {
   var fileName: String
   @Binding var isPlaying: Bool
+  @Binding var progressPoint: CGFloat
 
   // MARK: Make LottieView
   func makeUIView(context: Context) -> some UIView {
@@ -204,14 +191,14 @@ struct ResizableLottieView: UIViewRepresentable {
     return view
   }
 
-  // MARK: - Finding view with Tag 1009 and make the animation play or pause
+  // MARK: - Update animation based on scroll progress or play state
   func updateUIView(_ uiView: UIViewType, context: Context) {
     for view in uiView.subviews {
       if view.tag == 1009, let lottieView = view as? LottieAnimationView {
         if isPlaying {
           lottieView.play()
         } else {
-          lottieView.pause()
+          lottieView.currentProgress = AnimationProgressTime(progressPoint/2)
         }
       }
     }
@@ -221,7 +208,9 @@ struct ResizableLottieView: UIViewRepresentable {
   func addLottieView(view to: UIView) {
     let lottieView = LottieAnimationView(name: fileName, bundle: .main)
     lottieView.backgroundColor = .clear
-    // MARK: For finding it in subview and us ed for animation
+    lottieView.loopMode = .loop
+    lottieView.animationSpeed = 1.0
+    // MARK: For finding it in subview and used for animation
     lottieView.tag = 1009
     lottieView.translatesAutoresizingMaskIntoConstraints = false
 
